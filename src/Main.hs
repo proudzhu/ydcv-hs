@@ -43,7 +43,7 @@ decodeDict str = DA.decode (BS.pack str)
 
 lookupWord :: String -> IO ()
 lookupWord word = do
-                res <- get (getWordUrl word)
+                res <- get (getWordUrl (urlEncode word))
                 renderDictLn (fromJust (decodeDict res :: Maybe Dict))
 
 lookupAllWords :: [String] -> IO ()
