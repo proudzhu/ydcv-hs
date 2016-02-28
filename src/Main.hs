@@ -29,7 +29,7 @@ getWordUrl :: String -> String
 getWordUrl word = ydBaseUrl ++ "&q=" ++ word
 
 testUrl :: String
-testUrl = "http://fanyi.youdao.com/openapi.do?keyfrom=YouDaoCV&key=659600698&type=data&doctype=json&version=1.2&q=good"
+testUrl = "http://fanyi.youdao.com/openapi.do?keyfrom=YouDaoCV&key=659600698&type=data&doctype=json&version=1.2&q=nihao"
 
 get :: String -> IO String
 get url = simpleHTTP (getRequest url) >>= getResponseBody

@@ -1,5 +1,6 @@
 module Formatter (renderDict, renderDictLn)  where
 
+import Data.Maybe (fromJust, fromMaybe)
 import Text.PrettyPrint.ANSI.Leijen
 import Data.List (intercalate)
 import YdResponse
@@ -26,23 +27,33 @@ renderDictHelper dict = renderNormalDict dict <+>
 renderNormalDict :: Dict -> Doc
 renderNormalDict dict = underline (text (query dict))
 
-renderBasicDict :: BasicDict -> Doc
-renderBasicDict basic = text " UK: [" <+>
-                        yellow (text (ukPhonetic basic)) <+>
+renderBasicDict :: Maybe BasicDict -> Doc
+renderBasicDict maybeBasic = case maybeBasic of
+                               Just basic -> renderBasicDictJust basic
+                               Nothing -> text ""
+
+renderBasicDictJust :: BasicDict -> Doc
+renderBasicDictJust basic = text " UK: [" <+>
+                        yellow (text (fromMaybe "" (ukPhonetic basic))) <+>
                         text "], US: [" <+>
-                        yellow (text (usPhonetic basic)) <+>
+                        yellow (text (fromMaybe "" (usPhonetic basic))) <+>
                         text "]" <+> hardline <+>
                         cyan (text "  Text to Speech:\n") <+>
-                        text "     * UK:" <+> text (ukSpeech basic) <+> hardline <+>
-                        text "     * US:" <+> text (usSpeech basic) <+> hardline <+>
+                        text "     * UK:" <+> text (fromMaybe "" (ukSpeech basic)) <+> hardline <+>
+                        text "     * US:" <+> text (fromMaybe "" (usSpeech basic)) <+> hardline <+>
                         hardline <+>
                         cyan (text "  Word Explanation:") <+> hardline <+>
                         text "     *" <+>
                         text (intercalate "\n      * " (explains basic)) <+> hardline <+>
                         hardline
 
-renderWebDict :: [WebDict] -> Doc
-renderWebDict webs = cyan (text "  Web Reference:") <+> hardline <+>
+renderWebDict :: Maybe [WebDict] -> Doc
+renderWebDict maybeWebs = case maybeWebs of
+                            Just webs -> renderWebDictJust webs
+                            Nothing   -> text ""
+
+renderWebDictJust :: [WebDict] -> Doc
+renderWebDictJust webs = cyan (text "  Web Reference:") <+> hardline <+>
                      concatDoc (map renderWebDictHelper webs) <+> hardline
 
 
