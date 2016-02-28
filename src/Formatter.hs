@@ -1,6 +1,6 @@
 module Formatter (renderDict, renderDictLn)  where
 
-import Data.Maybe (fromJust, fromMaybe)
+import Data.Maybe (isJust, fromJust, fromMaybe)
 import Text.PrettyPrint.ANSI.Leijen
 import Data.List (intercalate)
 import YdResponse
@@ -20,18 +20,28 @@ renderDict dict =
               _ -> text " -- No result for this query.\n"
 
 renderDictHelper :: Dict -> Doc
-renderDictHelper dict = renderNormalDict dict <+>
-                        renderBasicDict (basic dict) <+>
-                        renderWebDict (web dict)
+renderDictHelper dict = renderNormalDict dict
+                        <+> case isJust (basic dict) of
+                              True -> renderBasicDict (basic dict)
+                              False -> renderTranslation (translation dict)
+                        <+> renderWebDict (web dict)
 
 renderNormalDict :: Dict -> Doc
 renderNormalDict dict = underline (text (query dict))
+
+renderTranslation :: [String] -> Doc
+renderTranslation trans = hardline <+>
+                     cyan (text "  Translation:") <+> hardline <+>
+                     concatDoc (map renderTranslationHelper trans) <+> hardline
+
+renderTranslationHelper :: String -> Doc
+renderTranslationHelper tran = text "     *" <+> text tran <+> hardline
 
 renderBasicDict :: Maybe BasicDict -> Doc
 renderBasicDict maybeBasic = case maybeBasic of
                                Just basic -> renderBasicDictJust basic
                                Nothing -> text ""
-
+{--
 renderBasicDictJust :: BasicDict -> Doc
 renderBasicDictJust basic = text " UK: [" <+>
                         yellow (text (fromMaybe "" (ukPhonetic basic))) <+>
@@ -46,6 +56,57 @@ renderBasicDictJust basic = text " UK: [" <+>
                         text "     *" <+>
                         text (intercalate "\n      * " (explains basic)) <+> hardline <+>
                         hardline
+--}
+renderBasicDictJust :: BasicDict -> Doc
+renderBasicDictJust basic =
+                        renderBasicDictJustPhonetic basic <+>
+                        renderBasicDictJustSpeech basic <+>
+                        cyan (text "  Word Explanation:") <+> hardline <+>
+                        text "     *" <+>
+                        text (intercalate "\n      * " (explains basic)) <+> hardline <+>
+                        hardline
+
+renderBasicDictJustPhonetic :: BasicDict -> Doc
+renderBasicDictJustPhonetic basic =
+                    if maybeUk && maybeUs
+                      then
+                        text " UK: [" <+>
+                        yellow (text (fromMaybe "" (ukPhonetic basic))) <+>
+                        text "], US: [" <+>
+                        yellow (text (fromMaybe "" (usPhonetic basic))) <+>
+                        text "]" <+> hardline
+                      else if maybeNon
+                             then
+                               text " [" <+>
+                               yellow (text (fromMaybe "" (phonetic basic))) <+>
+                               text "]" <+> hardline
+                             else
+                               hardline
+                      where
+                        maybeUk = isJust (ukPhonetic basic)
+                        maybeUs = isJust (usPhonetic basic)
+                        maybeNon = isJust (phonetic basic)
+
+renderBasicDictJustSpeech :: BasicDict -> Doc
+renderBasicDictJustSpeech basic =
+                    if maybeUk && maybeUs
+                      then
+                        cyan (text "  Text to Speech:\n") <+>
+                        text "     * UK:" <+> text (fromMaybe "" (ukSpeech basic)) <+> hardline <+>
+                        text "     * US:" <+> text (fromMaybe "" (usSpeech basic)) <+> hardline <+>
+                        hardline
+                     else if maybeNon
+                            then
+                              text "     * " <+>
+                              text (fromMaybe "" (speech basic)) <+>
+                              hardline <+>
+                              hardline
+                            else
+                              text ""
+                    where
+                      maybeUk = isJust (ukSpeech basic)
+                      maybeUs = isJust (usSpeech basic)
+                      maybeNon = isJust (speech basic)
 
 renderWebDict :: Maybe [WebDict] -> Doc
 renderWebDict maybeWebs = case maybeWebs of
