@@ -21,9 +21,9 @@ renderDict dict =
 
 renderDictHelper :: Dict -> Doc
 renderDictHelper dict = renderNormalDict dict
-                        <+> case isJust (basic dict) of
-                              True -> renderBasicDict (basic dict)
-                              False -> renderTranslation (translation dict)
+                        <+> (if isJust (basic dict)
+                               then renderBasicDict (basic dict)
+                               else renderTranslation (translation dict))
                         <+> renderWebDict (web dict)
 
 renderNormalDict :: Dict -> Doc
@@ -67,46 +67,40 @@ renderBasicDictJust basic =
                         hardline
 
 renderBasicDictJustPhonetic :: BasicDict -> Doc
-renderBasicDictJustPhonetic basic =
-                    if maybeUk && maybeUs
-                      then
+renderBasicDictJustPhonetic basic
+                    | maybeUk && maybeUs =
                         text " UK: [" <+>
                         yellow (text (fromMaybe "" (ukPhonetic basic))) <+>
                         text "], US: [" <+>
                         yellow (text (fromMaybe "" (usPhonetic basic))) <+>
                         text "]" <+> hardline
-                      else if maybeNon
-                             then
-                               text " [" <+>
-                               yellow (text (fromMaybe "" (phonetic basic))) <+>
-                               text "]" <+> hardline
-                             else
-                               hardline
-                      where
+                    | maybeNon =
+                        text " [" <+>
+                        yellow (text (fromMaybe "" (phonetic basic))) <+>
+                        text "]" <+> hardline
+                    | otherwise =  hardline
+                    where
                         maybeUk = isJust (ukPhonetic basic)
                         maybeUs = isJust (usPhonetic basic)
                         maybeNon = isJust (phonetic basic)
 
 renderBasicDictJustSpeech :: BasicDict -> Doc
-renderBasicDictJustSpeech basic =
-                    if maybeUk && maybeUs
-                      then
+renderBasicDictJustSpeech basic
+                    | maybeUk && maybeUs =
                         cyan (text "  Text to Speech:\n") <+>
                         text "     * UK:" <+> text (fromMaybe "" (ukSpeech basic)) <+> hardline <+>
                         text "     * US:" <+> text (fromMaybe "" (usSpeech basic)) <+> hardline <+>
                         hardline
-                     else if maybeNon
-                            then
-                              text "     * " <+>
-                              text (fromMaybe "" (speech basic)) <+>
-                              hardline <+>
-                              hardline
-                            else
-                              text ""
+                    | maybeNon =
+                        text "     * " <+>
+                        text (fromMaybe "" (speech basic)) <+>
+                        hardline <+>
+                        hardline
+                    | otherwise = text ""
                     where
-                      maybeUk = isJust (ukSpeech basic)
-                      maybeUs = isJust (usSpeech basic)
-                      maybeNon = isJust (speech basic)
+                        maybeUk = isJust (ukSpeech basic)
+                        maybeUs = isJust (usSpeech basic)
+                        maybeNon = isJust (speech basic)
 
 renderWebDict :: Maybe [WebDict] -> Doc
 renderWebDict maybeWebs = case maybeWebs of
