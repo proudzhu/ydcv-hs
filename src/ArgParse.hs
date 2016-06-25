@@ -1,4 +1,4 @@
-module ArgParse  where
+module ArgParse where
 
 import Options.Applicative
 
